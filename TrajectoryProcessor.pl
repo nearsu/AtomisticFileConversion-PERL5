@@ -62,15 +62,15 @@ my ($result) = processTrajectoryObjects({
 	
 	'input'  => AtomisticFileConversion::Util_Trajectory::Combine->new([
 		# XDATCAR with extra data such as time step...
-	#	AtomisticFileConversion::Data2VASP::XDAT2traj         ->new($xdatcarIn), 	# XDATCAR: VASP trajectory format (version 5.2.12 or 5.3.5, automatic selection)		
+		AtomisticFileConversion::Data2VASP::XDAT2traj         ->new($xdatcarIn), 	# XDATCAR: VASP trajectory format (version 5.2.12 or 5.3.5, automatic selection)		
 		#AtomisticFileConversion::Data2VASP::XDAT2traj_5_3_5  ->new($xdatcarIn), 	# XDATCAR: VASP trajectory format (version 5.3.5) (no forces, no velocities, no time step, etc...)
 		#AtomisticFileConversion::Data2VASP::XDAT2traj_5_2_12 ->new($xdatcarIn), 	# XDATCAR: VASP trajectory format (version 5.2.12) (no unit cell parameter updates, no forces, no velocities, no time step, etc...)
-	
+		
 		# CHG 	
-		AtomisticFileConversion::Data2VASP::CHG2traj          ->new($chgIn),		# CHG: VASP charge density and trajectory format (no forces, no velocities, no time step, etc...)
+		#AtomisticFileConversion::Data2VASP::CHG2traj          ->new($chgIn),		# CHG: VASP charge density and trajectory format (no forces, no velocities, no time step, etc...)
 	
 		# Add time step and other data...
-		AtomisticFileConversion::Util_Trajectory::FixedData->new({'timeStep' => 5})				
+		AtomisticFileConversion::Util_Trajectory::FixedData->new({'timeStep' => 0.001})
 	]) ,
 	
 
@@ -79,11 +79,11 @@ my ($result) = processTrajectoryObjects({
 	#### Output...
 
 	# XDATCAR 
-	'output' => AtomisticFileConversion::Data2VASP::Traj2XDAT_5_3_5->new($xdatcarOut),		# XDATCAR (Version 5.3.5) VASP trajectory format (no forces, no velocities, no time step, etc...)
+	#'output' => AtomisticFileConversion::Data2VASP::Traj2XDAT_5_3_5->new($xdatcarOut),		# XDATCAR (Version 5.3.5) VASP trajectory format (no forces, no velocities, no time step, etc...)
 	#'output' => AtomisticFileConversion::Data2VASP::Traj2XDAT_5_2_12->new($xdatcarOut),	# XDATCAR (Version 5.3.5) VASP trajectory format (no unit cell parameter updates, no forces, no velocities, no time step, etc...)
 
 	# Materials Studio MDTR/trj
-	#'output' => AtomisticFileConversion::Data2MS::Traj2XTD_MDTR_2010->new($fileOut),		# XTD_MDTR: Materials Studio via MDTR/tjr format (timestep, but issues with varying unit-cell parameters)
+	'output' => AtomisticFileConversion::Data2MS::Traj2XTD_MDTR_2010->new($fileOut),		# XTD_MDTR: Materials Studio via MDTR/tjr format (timestep, but issues with varying unit-cell parameters)
 
 	# Materials Studio XTD -> uncomment library above if used
 	#'output' => AtomisticFileConversion::Data2MS::Traj2XTD->new($trjName),					# XTD_MDTR: Materials Studio via MDTR/tjr format (timestep, but issues with varying unit-cell parameters)
