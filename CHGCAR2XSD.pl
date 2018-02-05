@@ -9,7 +9,7 @@ use lib "$Bin";
 use Storable qw(dclone);
 use MaterialsScript qw(:all);
 
-my $folderLocation = 'C:\My\Path\To\CHGCAR';    # File/folder containing the CHG file
+my $folderLocation = 'C:\My\Path\To\CHGCAR';    # File/folder containing the CHGAR file
 my $xsdName = 'Structure';						# Name of xsd to create
 my $defaultChgcarName = 'CHGCAR';				# Name of CHGCAR file
 
