@@ -21,6 +21,10 @@ use AtomisticFileConversion::Data2VASP::XDAT2traj;
 use AtomisticFileConversion::Data2VASP::XDAT2traj_5_2_12;
 use AtomisticFileConversion::Data2VASP::XDAT2traj_5_3_5;
 
+# CHG
+my $chgIn  = 'C:\My\Path\To\CHG'; # File/folder containing the CHG file
+use AtomisticFileConversion::Data2VASP::CHG2traj;
+
 
 #### Output...
 
@@ -34,7 +38,7 @@ my $fileOut = 'C:\My\Path\To\Output\myTrajectory'; # Output file for trajectory
 use AtomisticFileConversion::Data2MS::Traj2XTD_MDTR_2010;
 
 ## Materials Studio XTD
-# Uncomment as requires materials studio
+# Uncomment when necessary as requires materials studio
 #my $trjName = 'myOutputTrajectory';
 #use AtomisticFileConversion::Data2MS::Traj2XTD;
 
@@ -53,13 +57,20 @@ my ($result) = processTrajectoryObjects({
 	#'input'  => AtomisticFileConversion::Data2VASP::XDAT2traj_5_3_5  ->new($xdatcarIn), # XDATCAR: VASP trajectory format (version 5.3.5) (no forces, no velocities, no time step, etc...)
 	#'input'  => AtomisticFileConversion::Data2VASP::XDAT2traj_5_2_12 ->new($xdatcarIn), # XDATCAR: VASP trajectory format (version 5.2.12) (no unit cell parameter updates, no forces, no velocities, no time step, etc...)
 	
-	# XDATCAR with extra data such as time step...
+	# CHG 	
+	#'input'  => AtomisticFileConversion::Data2VASP::CHG2traj          ->new($chgIn),	 # CHG: VASP charge density and trajectory format (no forces, no velocities, no time step, etc...)
+	
 	'input'  => AtomisticFileConversion::Util_Trajectory::Combine->new([
-		AtomisticFileConversion::Data2VASP::XDAT2traj         ->new($xdatcarIn), 	# XDATCAR: VASP trajectory format (version 5.2.12 or 5.3.5, automatic selection)		
+		# XDATCAR with extra data such as time step...
+	#	AtomisticFileConversion::Data2VASP::XDAT2traj         ->new($xdatcarIn), 	# XDATCAR: VASP trajectory format (version 5.2.12 or 5.3.5, automatic selection)		
 		#AtomisticFileConversion::Data2VASP::XDAT2traj_5_3_5  ->new($xdatcarIn), 	# XDATCAR: VASP trajectory format (version 5.3.5) (no forces, no velocities, no time step, etc...)
 		#AtomisticFileConversion::Data2VASP::XDAT2traj_5_2_12 ->new($xdatcarIn), 	# XDATCAR: VASP trajectory format (version 5.2.12) (no unit cell parameter updates, no forces, no velocities, no time step, etc...)
-		
-		AtomisticFileConversion::Util_Trajectory::FixedData->new({'timeStep' => 5})		# XDATCAR: VASP trajectory format (version 5.2.12 or 5.3.5, automatic selection)		
+	
+		# CHG 	
+		AtomisticFileConversion::Data2VASP::CHG2traj          ->new($chgIn),		# CHG: VASP charge density and trajectory format (no forces, no velocities, no time step, etc...)
+	
+		# Add time step and other data...
+		AtomisticFileConversion::Util_Trajectory::FixedData->new({'timeStep' => 5})				
 	]) ,
 	
 

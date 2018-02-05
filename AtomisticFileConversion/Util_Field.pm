@@ -17,7 +17,6 @@ $VERSION     = 1.00;
 
 sub fieldVoxels {
 	my ($fieldRef) = @_;
-	
 	my $fieldVoxels;
 	foreach (0..2){
 		push @$fieldVoxels, $#{$fieldRef};

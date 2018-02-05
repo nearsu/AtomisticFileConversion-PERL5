@@ -164,7 +164,7 @@ sub Data2CAR_Body {
 
 
 sub CHG2data {
-	my ($fh, $spin) = @_;
+	my ($fh) = @_;
 	my $fileInformation = fileFinder($fh, {
 		'fileMode' 			=> 'READ',			# -> Desired output - Manditory
 		'defaultHandleType' => 'FILEHANDLE',	# -> Looking for input or output file if a file handle - Manditory
@@ -175,19 +175,36 @@ sub CHG2data {
 	my $cs = CAR2data($fh);
 	return undef if (!defined $cs); 
 	
-	$spin = 1 unless defined $spin;
-	
 	Line ($fh); # Blank line...
 	
-	my $field = Field($fh);
-	my $field2 = {};
-	$field2 = Field($fh) if ($spin == 2);
 	
+	# Check to see if at end of file or the header is repeated -> CHG file new frame marker
+	# This indicates whether or not to load more charge densities...
+	# Repeat 4 times total for maximum number of charge densities possible
+	
+	my $fields = {};
+	FIELD: foreach my $index ('',1..3){
+		# Read next line, test it and then rewind file handle...
+		my $currentFhPosition = tell ($fh);
+		die 'tell call error on file handle: $!' if ($currentFhPosition == -1);
+		my $header = Header($fh);
+		seek ($fh, $currentFhPosition, 0) || die 'seek function error on file handle: $!';
+		
+		if (
+				(defined $header) &&
+				($$header{'header'} ne $$cs{'header'})
+		){
+			my $fieldData = Field($fh);
+			$$fields{"field$index"} = $$fieldData{'field'};
+		} else {
+			last FIELD;
+		}
+	}
 	
 	return {
 		%$cs,
-		%$field
-	}
+		%$fields,
+	};
 }
 
 sub CHGMD2AverageField {
@@ -211,7 +228,7 @@ sub CHGMD2AverageField {
 		push @$trajectory, $data;
 		
 		#last if $count > 2;
-	}
+	};
 	
 	#printData $fieldSum;
 	my $fieldAve = fieldMultiply ($fieldSum, (1/$count));
@@ -219,23 +236,6 @@ sub CHGMD2AverageField {
 	return ($fieldAve, $trajectory, $count);
 	
 
-}
-
-
-sub CHG2sub {
-	my ($fh, $spin, $subroutine, $arguments) = @_;
-
-	my $count = -1;
-	while (my $data = CHG2data($fh, $spin)){
-		$count++;
-
-		# Send to subroutine
-		my $result = &{$subroutine}($data, $count, $arguments);
-		return $result if ($result != 0);
-		
-	}
-	
-	return 0;
 }
 
 
@@ -276,9 +276,12 @@ sub OUTCAR2info {
 	# Read data from OUTCAR file...
 	my ($folder, $field, $fieldPostion) = @_;
 	
-	# Convert file to folder and file name if necessary -> Make a utility for this...
-	my $file = $folder.'/OUTCAR';
-	open(my $fh, "<", $file) or die "Can't open file \"$file\" : $!";
+	my $fileInformation = fileFinder($folder, {
+		'fileMode' 			=> 'READ',			# -> Desired output - Manditory
+		'defaultHandleType' => 'FILEHANDLE',	# -> Looking for input or output file if a file handle - Manditory
+		'defaultName' 		=> 'OUTCAR',		# -> Default file name - Optional
+	});	
+	my $fh = $$fileInformation{'fileHandle'};
 	
 	while (my $text = <$fh>){
 		#my $result = $text=~/$field\s*\=\s*(.+)[\;$]/;
@@ -318,83 +321,6 @@ sub OUTCAR2info {
 	}
 	close $fh or die "Cannot close file: $!\n";
 	return undef;
-}
-
-
-
-
-
-sub CHG2traj {
-	my ($arguements, $subroutineSection) = @_;
-	
-	my %subroutines = (
-		'Header'	=> \&CHG2traj_Header,
-		'Body'  	=> \&CHG2traj_Body,
-		'Footer'	=> \&CHG2traj_Footer,
-	);
-	
-	return $subroutines{$subroutineSection};
-}
-
-sub CHG2traj_Header {
-	my ($dataHash) = @_; 
-	my $args = $$dataHash{'Args'}; 
-	my ($fileInFolder) = @$args; 
-	
-	my %data;
-	
-	#my $spin = 1; #### -> Load from OUTCAR file -> Grep and get first match for ISPIN!? What about NONCOLLINEAR!?
-	## Also need time step or relaxation!? IBRION!? Total energy!? Forces!? Velocities!? Etc...
-	
-	my $spin = OUTCAR2field($fileInFolder, 'ISPIN', 0);
-	die 'cannot find spin value from outcar file' unless defined $spin;
-	printf "Spin: %s\n", $spin;
-	$data{'spin'} = $spin;
-	
-	my $ibrion = OUTCAR2field($fileInFolder, 'IBRION', 0);
-	die 'cannot find IBRION value from outcar file' unless defined $spin;
-	printf "ibrion: %s\n", $ibrion;
-	$data{'ibrion'} = $ibrion;
-	
-	if ($ibrion == 0){
-		my $timeStep = 0;
-		my $timeStepTemp = OUTCAR2field($fileInFolder, 'POTIM', 0);
-		die 'cannot find timestep (POTIM) value from outcar file' unless defined $timeStepTemp;
-		printf "POTIM: %s\n", $timeStepTemp;
-		$timeStep = $timeStepTemp * 1e-15;
-		$data{'timeStep'} = $timeStep;
-	}
-	
-	my $fileInName = $fileInFolder . '/CHG'; #### Make more robust, split off CHG if necessary...
-	print "In: $fileInName\n";
-	die "No input file specified"  unless defined $fileInName;
-	open(my $fh, "<", $fileInName) or die "Can't open file: $!";
-	$data{'fh'} = $fh;
-	
-	return \%data;
-}
-
-sub CHG2traj_Body {
-	my ($dataHash) = @_; 
-	my $args = $$dataHash{'Args'}; 
-	my $headerValues = $$dataHash{'Header'}; 
-	my %timeHash;
-	if (defined ($$headerValues{'timeStep'})){
-		my $timeStep = $$headerValues{'timeStep'};
-		%timeHash = ('timeStep' => $timeStep);
-	}
-	
-	my $data = CHG2data($$headerValues{'fh'}, $$headerValues{'spin'});
-	return {
-		%$data,     
-		%timeHash,
-	};	
-
-
-}
-
-sub CHG2traj_Footer {
-	return 1;
 }
 
 

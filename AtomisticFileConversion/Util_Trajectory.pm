@@ -198,7 +198,7 @@ sub processTrajectoryObjects {
 		}
 	}
 	
-	return 1;
+	return $$hash{'output'}->DESTROY();
 }
 
 

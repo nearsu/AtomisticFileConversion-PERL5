@@ -3,9 +3,6 @@ package AtomisticFileConversion::Data2VASP::Traj2XDAT_5_2_12;
 use strict;
 use warnings;
 
-use Data::Dumper; ####
-
-
 use AtomisticFileConversion::Util_Lines qw(:All);
 use AtomisticFileConversion::Util_Trajectory qw(firstStepTrajectory);
 use AtomisticFileConversion::Data2VASP qw(Data2CAR_Header Data2CAR_Body);
