@@ -60,7 +60,6 @@ sub body {
 
 	# Rotation of unit cell vectors to make Yy, Zy and Zz = 0
 	# These values are not loaded by Materials Studio
-	# If someone knows how to load them then please remove the following rotation code, above warnings and update the writing subroutine...
 	
 	# Two rotations necessary
 	# First:  Rotate all about Z x Zz by angle acos((Z dot Zz) / |Z|)    -> Rotates Z to Zz
@@ -196,24 +195,24 @@ sub determineEulerRotation {
 	
 
 
-	# Step 1: Rotate b-direction along Y-axis
+	# Step 1: Rotate C-direction along Z-axis
 	my $unitCell = dclone($$data{'vectors'});
 	die "No unit cell data in data structure" unless $unitCell;
 	
-	my $rotationAxis1  = vectUnit(cross($$unitCell[1], $y));
-	my $rotationAngle1 = Re(acos(dot(vectUnit($$unitCell[1]), $y)));
+	my $rotationAxis1  = vectUnit(cross($$unitCell[2], $z));
+	my $rotationAngle1 = Re(acos(dot(vectUnit($$unitCell[2]), $z)));
 	my $eulerParameter1 = rotationAboutDirection_EulerParameters($rotationAxis1, $rotationAngle1);
 	
-	# Step 2: Rotate around Y-axis until A is in Ax-Ay plane
+	# Step 2: Rotate around Z-axis until B is in By-Bz plane
 	$data = dataRotate($data, $eulerParameter1);
 	$unitCell = dclone($$data{'vectors'});
 	
-	my $rotationAxis2  = scalMult($y, -1); #Rotation in wrong direction fixed here...
-	my $rotationAngle2 = Re(acos(dot(vectUnit([$$unitCell[0][0], 0, $$unitCell[0][2]]), $x)));
+	my $rotationAxis2  = scalMult($z, -1); #Rotation in wrong direction fixed here...
+	my $rotationAngle2 = Re(acos(dot(vectUnit([$$unitCell[1][0], $$unitCell[1][1], 0]), $y)));
 	my $eulerParameter2 = rotationAboutDirection_EulerParameters($rotationAxis2, $rotationAngle2);
 	
-	$data = dataRotate($data, $eulerParameter2);
-	$unitCell = dclone($$data{'vectors'});
+	#$data = dataRotate($data, $eulerParameter2);
+	#$unitCell = dclone($$data{'vectors'});
 
 	#return rotationAboutDirection_EulerParameters($x, 0);
 	#return $eulerParameter1;
@@ -454,8 +453,8 @@ sub Data2MDTR_Body {
 	
 	# Have to perform a rotation on the unit cell vectors to change the last 3 entries to effectively zero, see other parts of script
 	printf $fh "	 %.16e %.16e %.16e\n", $$unitCell[0][0], $$unitCell[1][1], $$unitCell[2][2];
-	printf $fh "	 %.16e %.16e %.16e\n", $$unitCell[2][1], $$unitCell[2][0], $$unitCell[0][1];
-	printf $fh "	 %.16e %.16e %.16e\n", $$unitCell[1][2], $$unitCell[0][2], $$unitCell[1][0]; #### Cannot reproduce this line, all values in this line should all be zero... 
+	printf $fh "	 %.16e %.16e %.16e\n", $$unitCell[1][2], $$unitCell[0][2], $$unitCell[0][1];
+	printf $fh "	 %.16e %.16e %.16e\n", $$unitCell[2][1], $$unitCell[2][0], $$unitCell[1][0]; #### Cannot reproduce this line, all values in this line should all be zero... 
 	#printf $fh "	 0.0000000000000000e+000  0.0000000000000000e+000  0.0000000000000000e+000\n";
 
 	printf $fh "	 0.0000000000000000e+000  0.0000000000000000e+000  0.0000000000000000e+000\n";

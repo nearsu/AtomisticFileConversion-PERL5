@@ -196,7 +196,7 @@ sub vectUnit {
 	
 	my $scalingFactor = vectAbs($a);
 	if ($scalingFactor == 0){
-		warn "Length of vector is zero in conversion to unit vector\n";
+		#warn "Length of vector is zero in conversion to unit vector\n";
 		return [0, 0, 0];
 	}
 	#die "Length of vector is zero in conversion to unit vector" if $scalingFactor == 0;
