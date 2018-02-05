@@ -184,21 +184,51 @@ sub CHG2data {
 	
 	my $fields = {};
 	FIELD: foreach my $index ('',1..3){
-		# Read next line, test it and then rewind file handle...
-		my $currentFhPosition = tell ($fh);
-		die 'tell call error on file handle: $!' if ($currentFhPosition == -1);
-		my $header = Header($fh);
-		seek ($fh, $currentFhPosition, 0) || die 'seek function error on file handle: $!';
 		
-		if (
+		my $fieldData;
+	
+		# Try to load field...
+		{
+			# Read next line, test it and then rewind file handle...
+			my $currentFhPosition = tell ($fh);
+			die 'tell call error on file handle: $!' if ($currentFhPosition == -1);
+			my $header = Header($fh);
+			seek ($fh, $currentFhPosition, 0) || die 'seek function error on file handle: $!';
+			
+			# Exit field loop if end markers found...
+			last FIELD if (
+				(!defined $header) ||
+				($$header{'header'} eq $$cs{'header'})
+			);
+			
+			# Else load field...
+			$fieldData = Field($fh);
+		}	
+		
+		# Load augmentation occupancies if present
+		{
+			# Read next line, test it and then rewind file handle...
+			my $currentFhPosition = tell ($fh);
+			die 'tell call error on file handle: $!' if ($currentFhPosition == -1);
+			my $header = Header($fh);
+			seek ($fh, $currentFhPosition, 0) || die 'seek function error on file handle: $!';
+			
+			if ( 
 				(defined $header) &&
-				($$header{'header'} ne $$cs{'header'})
-		){
-			my $fieldData = Field($fh);
-			$$fields{"field$index"} = $$fieldData{'field'};
-		} else {
-			last FIELD;
-		}
+				($$header{'header'} =~ /^augmentation occupancies/)
+			){
+				my $augmentationData = CHGAug2Data($fh);
+				
+				# Ignoring this extra data...
+				#$fieldData = {
+				#	%$fieldData,
+				#	%$augmentationData,
+				#}
+			}
+		}	
+		
+		$$fields{"field$index"} = $$fieldData{'field'};
+		
 	}
 	
 	return {
@@ -207,38 +237,52 @@ sub CHG2data {
 	};
 }
 
-sub CHGMD2AverageField {
+
+
+sub CHGAug2Data(){
 	my ($fh) = @_;
 	
-	my $fieldSum;
-	my $trajectory;
-	my $count = 0;
-	while (my $data = CHG2data($fh)){
-		$count++;
-		print "$count\n";
-		my $field = $$data{'field'};
-		
-		if (!defined($fieldSum)){
-			$fieldSum = $field;
-		} else {
-			fieldSum ($fieldSum, $field);
-		}
-		
-		delete $$data{'field'};
-		push @$trajectory, $data;
-		
-		#last if $count > 2;
+	my $data = {
+		'occupancies' 	=> [],
 	};
 	
-	#printData $fieldSum;
-	my $fieldAve = fieldMultiply ($fieldSum, (1/$count));
-	#printData "FieldSumAve", $fieldAve ;
-	return ($fieldAve, $trajectory, $count);
-	
+	my $maxIndex = 0;
+	FILE: while (1){
+		my $currentFhPosition = tell ($fh);
+		die 'tell call error on file handle: $!' if ($currentFhPosition == -1);
+		my $headerArray = array($fh);
 
+		if (!defined $headerArray){
+			seek ($fh, $currentFhPosition, 0) || die 'seek function error on file handle: $!';
+			return $data;
+		}
+		
+		if (
+			($$headerArray[0] eq 'augmentation') &&
+			($$headerArray[1] eq 'occupancies')
+		){
+			# Load occupancies
+			my $index = $$headerArray[2];
+			my $count = $$headerArray[3];
+			die "Index doesn't look like a number for augmentation occupancies: $index" unless looks_like_number($index);
+			die "Count doesn't look like a number for augmentation occupancies: $count" unless looks_like_number($count);
+			
+			$$data{'occupancies'}[$index] = longArray($fh, $count);
+			$maxIndex = $index;
+		} elsif (
+			defined $headerArray
+		){
+			# Load weights
+			seek ($fh, $currentFhPosition, 0) || die 'seek function error on file handle: $!';
+			$$data{'weights'} = longArray($fh, $maxIndex);
+			
+			return $data;
+		} else {
+			seek ($fh, $currentFhPosition, 0) || die 'seek function error on file handle: $!';
+			return $data;
+		}
+	}
 }
-
-
 
 sub DOSCAR2data {
 	my ($fh) = @_;

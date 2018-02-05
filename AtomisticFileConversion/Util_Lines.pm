@@ -17,6 +17,7 @@ $VERSION     = 1.00;
 	Line 
 	number 
 	array 
+	longArray
 	vector
 	Vectors
 	UnitCell
@@ -29,6 +30,7 @@ $VERSION     = 1.00;
 	&Line 
 	&number 
 	&array 
+	&longArray
 	&vector
 	&Vectors
 	&UnitCell
@@ -60,6 +62,26 @@ sub Field {
 	
 	
 	return {'field' => $field};
+}
+
+sub longArray {
+	my ($fh, $count) = @_;
+	
+	numberCheck($count);
+	die 'Count must be positive' unless ($count > 0);
+	
+	my @outputArray;
+	my @data = ();
+	
+	foreach my $index (0..$count - 1){
+		# Load data when necessary...
+		push @data, @{array($fh)} if ($#data == -1);
+		
+		my $data = shift @data;
+		numberCheck($data);
+		push @outputArray, $data;
+	}
+	return \@outputArray;
 }
 
 sub Header {
