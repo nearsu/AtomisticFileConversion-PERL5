@@ -63,6 +63,8 @@ sub folderFileNameSplit {
 sub directoryPathCleaner {
 	my ($inputString) = @_;
 	
+	return '' if $inputString eq '';
+	
 	# Put a / on the end of the string
 	$inputString = $inputString.'/';
 	
