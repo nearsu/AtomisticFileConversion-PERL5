@@ -66,6 +66,4 @@ Therefore, a few import and export routines require the use of the Materials Stu
 
 
 
-
-#  This package is free software; you can redistribute it and/or
-#  modify it under the same terms as Perl itself.
+This package is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
