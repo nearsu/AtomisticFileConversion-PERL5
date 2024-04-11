@@ -7,7 +7,9 @@ use FindBin qw($Bin);
 use lib "$Bin";
 use Storable qw(dclone);
 
-my $folderLocation = 'C:\My\Path\To\CHGCAR';    # File/folder containing the CHGAR file
+#my $folderLocation = 'C:\My\Path\To\CHGCAR';    # File/folder containing the CHGAR file
+my $folderLocation = $1;
+$folderLocation = '' unless (defined $folderLocation);
 my $grdName = 'CHGCAR_';						# Names of grd to create
 my $defaultChgcarName = 'CHGCAR';				# Name of CHGCAR file
 

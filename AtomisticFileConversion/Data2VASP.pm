@@ -8,7 +8,7 @@ use List::Util qw(sum);
 use Scalar::Util qw(looks_like_number);
 
 use AtomisticFileConversion::Util_Lines qw(:All);
-use AtomisticFileConversion::Util_Field qw(fieldSum fieldMultiply);
+use AtomisticFileConversion::Util_Field qw(fieldSum fieldMultiply fieldVoxels);
 use AtomisticFileConversion::Util_Trajectory qw(firstStepTrajectory);
 use AtomisticFileConversion::Util_System qw(fileFinder);
 
@@ -17,7 +17,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = ();
-@EXPORT_OK   = qw(CAR2data Data2CAR CHG2data CHGMD2AverageField XDAT2sub CHG2sub DOSCAR2data OUTCAR2info CHG2traj Data2CAR_Header Data2CAR_Body);
+@EXPORT_OK   = qw(CAR2data Data2CAR CHG2data CHGMD2AverageField XDAT2sub CHG2sub DOSCAR2data OUTCAR2info CHG2traj Data2CAR_Header Data2CAR_Body Data2CHGCAR);
 
 
 sub CAR2data {
@@ -261,13 +261,27 @@ sub CHGAug2Data(){
 			($$headerArray[0] eq 'augmentation') &&
 			($$headerArray[1] eq 'occupancies')
 		){
-			# Load occupancies
-			my $index = $$headerArray[2];
-			my $count = $$headerArray[3];
+			my $type;
+			my $index;
+			my $count;
+			if (
+				($$headerArray[2] eq '(imaginary') &&
+				($$headerArray[3] eq 'part)')
+			){
+				# Load imaginary occupancies
+				$type = 'occupancies_imaginary';
+				$index = $$headerArray[4];
+				$count = $$headerArray[5];
+			} else {
+				$type = 'occupancies';
+				$index = $$headerArray[2];
+				$count = $$headerArray[3];
+			}
+
 			die "Index doesn't look like a number for augmentation occupancies: $index" unless looks_like_number($index);
 			die "Count doesn't look like a number for augmentation occupancies: $count" unless looks_like_number($count);
 			
-			$$data{'occupancies'}[$index] = longArray($fh, $count);
+			$$data{$type}[$index] = longArray($fh, $count);
 			$maxIndex = $index;
 		} elsif (
 			defined $headerArray
@@ -283,6 +297,50 @@ sub CHGAug2Data(){
 		}
 	}
 }
+
+
+sub Data2CHGCAR {
+	# Augmentation occupancies not currently writen to file...
+	
+	my ($fh, $data) = @_;
+	my $fileInformation = fileFinder($fh, {
+		'fileMode' 			=> 'WRITE',			# -> Desired output - Manditory
+		'defaultHandleType' => 'FILEHANDLE',	# -> Looking for input or output file if a file handle - Manditory
+		'defaultName' 		=> 'CHGCAR',		# -> Default file name - Optional
+	});
+	$fh = $$fileInformation{'fileHandle'};
+
+	# Write POSCAR header section
+	Data2CAR($fh, $data);
+	
+	# Blank line just once...
+	printf $fh "\n";
+	
+	# Write field output for each field in $data
+	FIELD: foreach my $index ('',1..3){
+		my $field = $$data{"field$index"};
+		my $fieldVoxels = fieldVoxels($field);
+		
+		# Field header...
+		printf $fh " %i", ($_ + 1) foreach (@$fieldVoxels);
+		printf $fh "\n";
+
+		# Content...
+		foreach my $k (0..$$fieldVoxels[2]){
+		foreach my $j (0..$$fieldVoxels[1]){
+		foreach my $i (0..$$fieldVoxels[0]){
+			my $value = $$field[$i][$j][$k];
+			#print ("$value $i $j $k\n");
+			looks_like_number($value) || 
+				die "Field value not a number in field subroutine";
+			
+			printf $fh "%s\n", $value;
+			
+		}}}
+	}
+}
+
+
 
 sub DOSCAR2data {
 	my ($fh) = @_;

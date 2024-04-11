@@ -2,6 +2,7 @@ package AtomisticFileConversion::Util_Math;
 
 use strict;
 use warnings;
+use Storable qw(dclone);
 use Math::Trig;
 use Math::Trig ':pi';
 use Scalar::Util qw(looks_like_number);
@@ -332,8 +333,8 @@ sub rotationAboutDirection_CombineEulerParameters {
 		#c = a_1 c_2 + c_1 a_2 - d_1 b_2 + b_1 d_2
 		#d = a_1 d_2 + d_1 a_2 - b_1 c_2 + c_1 b_2
 
-		#my $a = clone($output);
-		my $a = [1, 0, 0, 0];
+		#my $a = [1, 0, 0, 0];
+		my $a = dclone($output);
 		my $b = $eulerParameter;
 		
 		
