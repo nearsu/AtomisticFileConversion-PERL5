@@ -65,3 +65,7 @@ Therefore, a few import and export routines require the use of the Materials Stu
 6.-Run the script by pressing 'F5'
 
 
+
+
+#  This package is free software; you can redistribute it and/or
+#  modify it under the same terms as Perl itself.
