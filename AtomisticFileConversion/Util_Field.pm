@@ -15,7 +15,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = ();
-@EXPORT_OK   = qw(fieldVoxels fieldSum fieldMultiply fields2vectField fieldGrad fieldVectorUnit fieldVectorDot fieldVectorRotateSAXIS fieldZero vectField2fields);
+@EXPORT_OK   = qw(fieldVoxels fieldSum fieldMultiply fields2vectField fieldGrad fieldVectorUnit fieldVectorDot fieldVectorRotateSAXIS fieldZero vectField2fields fieldVectorMagnitude);
 
 
 
@@ -278,6 +278,25 @@ sub fieldVectorDot {
 	}}}
 
 	return $fieldVectorDot;
+}
+
+
+sub fieldVectorMagnitude {
+	my ($fieldVector1) = @_;
+	my $fieldVoxels = fieldVoxels($fieldVector1);
+	
+	my $fieldVectorMagnitude = [[[]]];
+	
+	foreach my $i (0..$$fieldVoxels[0]){
+	foreach my $j (0..$$fieldVoxels[1]){
+	foreach my $k (0..$$fieldVoxels[2]){
+		my $vector1 = $$fieldVector1[$i][$j][$k];
+		my $scalar = sqrt(dot($vector1, $vector1));
+
+		$$fieldVectorMagnitude[$i][$j][$k] = $scalar;
+	}}}
+
+	return $fieldVectorMagnitude;
 }
 
 
